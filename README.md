@@ -7,7 +7,7 @@ and role-based access control (RBAC) with row-level permission enforcement.
 
 ## Live Demo
 
-**Base URL:** `https://classroom-feedback-api.up.railway.app`
+**Base URL:** `https://zindua-assessment-production.up.railway.app`
 *(replace with your Railway URL after deploying)*
 
 ---
