@@ -4,44 +4,33 @@
 # TEACHING COMMENT — READ THIS BEFORE YOU READ THE REST OF THE FILE
 # ───────────────────────────────────────────────────────────────────
 #
-# There are two levels at which you can restrict access to data:
+# There are two different questions this file answers:
 #
-#   1. ROLE-LEVEL:  "Only Observers may reach this endpoint."
-#                   You check request.user.role == 'OBSERVER'. Done.
+#   1. ROLE-LEVEL: "Is this a person who is allowed into this part of the API?"
+#      Example: only an observer should reach the observer branch.
 #
-#   2. ROW-LEVEL:   "Only the Observer linked to THIS student may see
-#                   THIS specific piece of data."
-#                   A role check alone is not enough. You must query the
-#                   database — ObserverLink in our case — and ask:
-#                   does a row exist connecting this observer to the
-#                   student who owns the requested data?
+#   2. ROW-LEVEL: "Is this exact observer linked to this exact student?"
+#      Example: the observer on record can read one student's feedback,
+#      but not every student's feedback.
 #
-# Why does this distinction matter in the real world?
+# That second check is the important one for this project. The observer
+# role alone is too broad, because every observer would look identical
+# unless we ask the database for the actual ObserverLink row.
 #
-#     Think of a bank. "Only account holders can see account data" is
-#     role-level. "Only YOU can see YOUR account balance" is row-level.
-#     Most real-world API security bugs come from doing the role check
-#     and forgetting the row check.
-#
-#     The OWASP API Security Top 10 calls this mistake "Broken Object
-#     Level Authorization" (BOLA) — and it is consistently ranked the
-#     #1 vulnerability in API systems. It's the bug behind incidents
-#     like "I could see other users' orders by changing the ID in the
-#     URL."
-#
-#     The fix is always the same pattern:
-#         1. Fetch the object from the database.
-#         2. Ask: does the authenticated user have an explicit, stored
-#            relationship to THIS object?
-#         3. If no row proves it — deny access.
+# The security bug this prevents is Broken Object Level Authorization
+# (BOLA): the classic "change the ID in the URL and see someone else's
+# data" problem. The pattern we use here is:
+#   1. Load the submission from the database.
+#   2. Ask whether this user has a stored relationship to that row.
+#   3. Deny access if no matching relationship exists.
 #
 # In this file:
-#   - IsInstructor, IsStudent, IsObserver  -> role-level only
-#   - CanViewFeedback                      -> role-level + row-level
+#   - IsInstructor, IsStudent, IsObserver  -> role check only
+#   - CanViewFeedback                      -> role check + ObserverLink check
 #
-# Read CanViewFeedback.has_object_permission carefully and notice
-# where the database query happens and why.
-# ───────────────────────────────────────────────────────────────────
+# The most important line is the ObserverLink query inside
+# CanViewFeedback.has_object_permission.
+# ─────────────────────────────────────────────────────────────────
 
 from rest_framework.permissions import BasePermission
 from .models import ObserverLink
